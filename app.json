@@ -1,0 +1,5 @@
+{
+  "name": "CodeBot",
+  "description": "A discord bot",
+  "image": "heroku/python",
+}
