@@ -1,1 +1,1 @@
-web: py CodeBot.py
+web: python CodeBot.py
