@@ -1,0 +1,10 @@
+{
+    "py": {
+        "message_split_regex": "(\\n[.\\s]*\\n\\t{priority}[^\\s])|(\\n\\t{priority}def)",
+        "split_index": -1
+    },
+    "other": {
+        "message_split_regex": "\\n\\n",
+        "split_index": -1
+    }
+}
