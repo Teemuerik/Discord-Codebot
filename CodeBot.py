@@ -14,6 +14,8 @@ with open("secret.json", "r") as f:
 
 MAX_MESSAGE_LEN = 2000
 
+MAX_FILE_SIZE = 5000 # Bytes
+
 bot = commands.Bot(command_prefix="$")
 
 role_msg_content = "Valitse rooleja:"
@@ -136,7 +138,7 @@ def get_split_messages(file_content: str, ext):
     max_content_length = MAX_MESSAGE_LEN - (7 + len(ext))
     file_content.replace("    ", "\t")
     if len(file_content.rstrip()) <= MAX_MESSAGE_LEN:
-        return file_content
+        return [file_content]
     settings = get_ext_settings(ext)
     split_re = settings["message_split_regex"]
     split_i = settings["split_index"]
@@ -233,6 +235,12 @@ async def send_code_file(ctx):
         await msg.delete()
         return
     attachment: discord.Attachment = ctx.message.attachments[0]
+    if attachment.size > MAX_FILE_SIZE:
+        msg = await ctx.send("Tiedosto on liian suuri. Maksimikoko on 5kt.\n(Viesti poistetaan automaattisesti.)")
+        await asyncio.sleep(10)
+        await ctx.message.delete()
+        await msg.delete()
+        return
     file_bytes: bytes = await attachment.read()
     try:
         content = file_bytes.decode()
