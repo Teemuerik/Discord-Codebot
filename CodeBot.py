@@ -9,7 +9,8 @@ import re
 from discord.ext import commands
 from discord.utils import get
 
-TOKEN = "NjEwNzkwMDk0NjA5MDU1Nzc3.XVKZ2g.QPtPHeZ4mAm1vT9Y3EVqzWQcsGw"
+with open("secret.json", "r") as f:
+    TOKEN = json.load(f)["token"]
 
 MAX_MESSAGE_LEN = 2000
 
