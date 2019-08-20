@@ -133,6 +133,7 @@ def split_string_at(string, *indices):
     return parts
 
 def get_split_messages(file_content: str, ext):
+    max_content_length = MAX_MESSAGE_LEN - (7 + len(ext))
     file_content.replace("    ", "\t")
     if len(file_content.rstrip()) <= MAX_MESSAGE_LEN:
         return file_content
