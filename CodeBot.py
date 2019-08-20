@@ -148,38 +148,40 @@ def get_split_messages(file_content: str, ext):
         matches = regex.findall(file_content)
         for match in matches:
             if split_i < 0:
-                positions.append((0, match.endpos + split_i + 1))
+                positions.append((0, match.regs[0][1] + split_i + 1))
             else:
-                positions.append((0, match.pos + split_i))
+                positions.append((0, match.regs[0][0] + split_i))
     else:
         curr_priority = 0
         while True:
             # Get RegEx match positions.
             regex = re.compile(split_re.replace("priority", str(curr_priority)))
-            matches = regex.findall(file_content)
+            matches = list(regex.finditer(file_content))
             if len(matches) == 0:
                 max_priority = curr_priority - 1
                 break
             for match in matches:
                 if split_i < 0:
-                    positions.append((curr_priority, match.endpos + split_i + 1))
+                    positions.append((curr_priority, match.regs[0][1] + split_i + 1))
                 else:
-                    positions.append((curr_priority, match.pos + split_i))
+                    positions.append((curr_priority, match.regs[0][0] + split_i))
+            curr_priority += 1
 
     # Set split positions to the start of the line.
     new_positions = []
     for pos in positions:
-        while pos[1] != 0:
-            pos[1] -= 1
-            if file_content[pos[1]] == '\n':
-                pos[1] += 1
-                new_positions.append(pos)
+        position = pos[1]
+        while position != 0:
+            position -= 1
+            if file_content[position] == '\n':
+                position += 1
+                new_positions.append((pos[0], position))
                 break
     all_parts = split_string_at(file_content, *[np[1] for np in new_positions])
+    split_parts = [(0, all_parts[0])]
     if len(all_parts) > 1:
-        split_parts = [(0, all_parts[0])].extend(zip([np[0] for np in new_positions], all_parts[1:]))
-    else:
-        split_parts = [(0, all_parts[0])]
+        for part in zip([np[0] for np in new_positions], all_parts[1:]):
+            split_parts.append(part)
 
     # Split parts longer than the max length.
     parts = []
@@ -189,8 +191,10 @@ def get_split_messages(file_content: str, ext):
                 i = MAX_MESSAGE_LEN - x
                 if p[1][i] == '\n':
                     p_priority = p[0]
-                    p_split, p = split_string_at(p[1], i)
+                    p_split, p_str = split_string_at(p[1], i)
+                    p = (p_priority, p_str)
                     parts.append((p_priority, p_split))
+                    break
         parts.append(p)
     
     # Join parts shorter than the max length.
@@ -201,17 +205,20 @@ def get_split_messages(file_content: str, ext):
         for p in parts:
             if new_part == (0, ""):
                 new_part = (priority - 1, p[1])
+                continue
             if p[0] == priority:
                 if len(new_part[1]) + len(p[1]) < MAX_MESSAGE_LEN:
                     new_part = (priority - 1, ''.join([new_part[1], p[1]]))
-                elif len(new_part[1]) + len(p[1].rstrip()):
+                elif len(new_part[1]) + len(p[1].rstrip()) < MAX_MESSAGE_LEN:
                     new_part = (priority - 1, ''.join([new_part[1], p[1].rstrip()]))
-                else:
                     grouped_parts.append(new_part)
                     new_part = (0, "")
+                else:
+                    grouped_parts.append(new_part)
+                    new_part = (priority - 1, p[1])
             else:
                 grouped_parts.append(new_part)
-                new_part = (0, "")
+                new_part = (priority - 1, p[1])
     
     # Return final messages.
     return [p[1].rstrip() for p in grouped_parts]
@@ -237,7 +244,7 @@ async def send_code_file(ctx):
     filename = attachment.filename
     ext = filename.split(".")[1]
     messages = get_split_messages(content, ext)
-    await ctx.send(f"{ctx.user.mention} lähetti tiedoston \"{filename}\".")
+    await ctx.send(f"{ctx.author.mention} lähetti tiedoston \"{filename}\".")
     for message in messages:
         await ctx.send(f"```{ext}\n{message}```")
 
