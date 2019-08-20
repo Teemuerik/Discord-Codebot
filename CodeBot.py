@@ -187,9 +187,9 @@ def get_split_messages(file_content: str, ext):
     # Split parts longer than the max length.
     parts = []
     for p in split_parts:
-        while len(p[1].rstrip()) > MAX_MESSAGE_LEN:
-            for x in range(MAX_MESSAGE_LEN):
-                i = MAX_MESSAGE_LEN - x
+        while len(p[1].rstrip()) > max_content_length:
+            for x in range(max_content_length):
+                i = max_content_length - x
                 if p[1][i] == '\n':
                     p_priority = p[0]
                     p_split, p_str = split_string_at(p[1], i)
@@ -208,7 +208,7 @@ def get_split_messages(file_content: str, ext):
                 new_part = (priority - 1, p[1])
                 continue
             if p[0] == priority:
-                if len(new_part[1]) + len(p[1]) < MAX_MESSAGE_LEN:
+                if len(new_part[1]) + len(p[1]) < max_content_length:
                     new_part = (priority - 1, ''.join([new_part[1], p[1]]))
                 elif len(new_part[1]) + len(p[1].rstrip()) < MAX_MESSAGE_LEN:
                     new_part = (priority - 1, ''.join([new_part[1], p[1].rstrip()]))
